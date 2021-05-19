@@ -30,11 +30,12 @@ class Usb(Escpos):
 
     """
 
-    def __init__(self, idVendor, idProduct, usb_args=None, timeout=0, in_ep=0x82, out_ep=0x01,
+    def __init__(self, idVendor=None, idProduct=None, usb_args=None, device=None, timeout=0, in_ep=0x82, out_ep=0x01,
                  *args, **kwargs):  # noqa: N803
         """
         :param idVendor: Vendor ID
         :param idProduct: Product ID
+        :param device: libusb device object, bypasses id-based scan
         :param usb_args: Optional USB arguments (e.g. custom_match)
         :param timeout: Is the time limit of the USB operation. Default without timeout.
         :param in_ep: Input end point
@@ -45,12 +46,22 @@ class Usb(Escpos):
         self.in_ep = in_ep
         self.out_ep = out_ep
 
-        usb_args = usb_args or {}
-        if idVendor:
-            usb_args['idVendor'] = idVendor
-        if idProduct:
-            usb_args['idProduct'] = idProduct
-        self.open(usb_args)
+        if device:
+            self.device = device
+            self.idVendor = self.device.idVendor
+            self.idProduct = self.device.idProduct
+            try:
+                self.device.set_configuration()
+                self.device.reset()
+            except usb.core.USBError as e:
+                print("Could not set configuration: {0}".format(str(e)))
+        else:
+            usb_args = usb_args or {}
+            if idVendor:
+                usb_args['idVendor'] = idVendor
+            if idProduct:
+                usb_args['idProduct'] = idProduct
+            self.open(usb_args)
 
     def open(self, usb_args):
         """ Search device on USB tree and set it as escpos device.
