@@ -50,11 +50,6 @@ class Usb(Escpos):
             self.device = device
             self.idVendor = self.device.idVendor
             self.idProduct = self.device.idProduct
-            try:
-                self.device.set_configuration()
-                self.device.reset()
-            except usb.core.USBError as e:
-                print("Could not set configuration: {0}".format(str(e)))
         else:
             usb_args = usb_args or {}
             if idVendor:
